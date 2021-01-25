@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <AccelStepper.h>
 #include <MultiStepper.h>
+#include <LIDARLite.h>
 
 #define BAUD_RATE 115200
 
@@ -38,6 +39,7 @@
 #define INSTRUCTION_HOME 'r'
 #define INSTRUCTION_DEBUG '?'
 #define INSTRUCTION_RUN 't'
+#define INSTRUCTION_BENCHMARK 'b'
 
 #define MODE_IDLE 0
 #define MODE_CENTERING 1 // Runs with speed and stops at hall sensor
@@ -54,6 +56,8 @@ int inByte = 0;
 AccelStepper stepperx = AccelStepper(AccelStepper::DRIVER, PIN_STEP1, PIN_DIR1);
 AccelStepper steppery = AccelStepper(AccelStepper::DRIVER, PIN_STEP2, PIN_DIR2);
 
+LIDARLite myLidarLite;
+
 char stringText[MAX_STRING_LENGTH + 1];
 
 int hx, hy;
@@ -67,8 +71,11 @@ int scanUntilRow = 0; // last row ro scan
 void setup()
 {
 
+  // LIDAR init
+  myLidarLite.begin(0, true);
+  myLidarLite.configure(0);
   pinMode(PIN_MC_TRIG, OUTPUT);
-  digitalWrite(PIN_MC_TRIG, LOW);
+  digitalWrite(PIN_MC_TRIG, HIGH);
   pinMode(PIN_MC_MON, INPUT);
 
   pinMode(PIN_HALLX, INPUT);
@@ -172,9 +179,11 @@ void serialFlush(void)
 
 unsigned long measure()
 {
-  unsigned long pulseWidth = pulseIn(PIN_MC_MON, HIGH);
-  pulseWidth = pulseWidth / 10; // 10us = 1cm
-  return pulseWidth;
+  // unsigned long pulseWidth = pulseIn(PIN_MC_MON, HIGH);
+  // pulseWidth = pulseWidth / 10; // 10us = 1cm
+
+  return myLidarLite.distance();
+  // return pulseWidth;
 }
 
 void printPoint()
@@ -187,6 +196,46 @@ void printPoint()
   Serial.print(steppery.currentPosition());
   Serial.print(",");
   Serial.println(measure());
+}
+
+void benchmark()
+{
+  int measurements = 1000;
+  long startTime = millis();
+  int zeros = 0;
+  float avg = -1, dist;
+  bool first = true;
+  for (int i = 0; i < measurements; i++)
+  {
+    dist = (float)myLidarLite.distance();
+    if (dist <= 0)
+    {
+      zeros++;
+      continue;
+    }
+    if (first)
+    {
+      first = false;
+      avg = dist;
+    }
+    else
+    {
+      avg = avg * (float)(i - 1) / float(i) + dist / (float)i;
+    }
+  }
+  long time = millis() - startTime;
+  float freq = (float)measurements / (float)time * 1000;
+  Serial.print("benchmark complete. took ");
+  Serial.print(measurements);
+  Serial.print(" measurements in ");
+  Serial.print(time);
+  Serial.print("ms (");
+  Serial.print(freq);
+  Serial.println("Hz)");
+  Serial.print("Average measurement: ");
+  Serial.print(avg);
+  Serial.print(", invalid count: ");
+  Serial.println(zeros);
 }
 
 bool scan()
@@ -409,6 +458,10 @@ void serialData(void)
     break;
   case INSTRUCTION_PRINT:
     printPoint();
+    break;
+  case INSTRUCTION_BENCHMARK:
+    benchmark();
+    break;
   default:
     Serial.println("eunknown command");
     break;
