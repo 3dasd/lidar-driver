@@ -8,8 +8,8 @@
 #define PIN_MC_TRIG 11
 #define PIN_MC_MON 10
 
-#define PIN_HALLY A7
-#define PIN_HALLX A6
+#define PIN_HALLY A6
+#define PIN_HALLX A7
 
 #define PIN_STEP1 9
 #define PIN_DIR1 8
@@ -34,19 +34,16 @@
 #define INSTRUCTION_SPEED2 'n'
 #define INSTRUCTION_STOP 's'
 #define INSTRUCTION_LIDAR 'l'
-#define INSTRUCTION_HALL 'h'
-#define INSTRUCTION_CENTER 'c'
 #define INSTRUCTION_DISABLE 'd'
 #define INSTRUCTION_ENABLE 'e'
 #define INSTRUCTION_PRINT 'p'
 #define INSTRUCTION_ACC 'a'
-#define INSTRUCTION_HOME 'r'
+#define INSTRUCTION_HOME 'h'
 #define INSTRUCTION_DEBUG '?'
-#define INSTRUCTION_RUN 't'
+#define INSTRUCTION_RUN 'r'
 #define INSTRUCTION_BENCHMARK 'b'
 
 #define MODE_IDLE 0
-#define MODE_CENTERING 1 // Runs with speed and stops at hall sensor
 #define MODE_SPEED 2
 #define MODE_MOVE 3
 #define MODE_HOMING 4   // Going back to home position
@@ -64,7 +61,7 @@ LIDARLite myLidarLite;
 
 char stringText[MAX_STRING_LENGTH + 1];
 
-int hx, hy;
+bool hx, hy;
 
 int mode = MODE_IDLE;
 int homingPhase = 0;
@@ -84,6 +81,8 @@ void setup()
   // LEDs init
   pinMode(PIN_LED_GREEN, OUTPUT);
   digitalWrite(PIN_LED_GREEN, HIGH);
+  // pinMode(PIN_LED_ORANGE, OUTPUT);
+  // digitalWrite(PIN_LED_ORANGE, HIGH);
 
   pinMode(PIN_HALLX, INPUT);
   pinMode(PIN_HALLY, INPUT);
@@ -97,8 +96,9 @@ void setup()
 
   pinMode(PIN_STEP1, OUTPUT);
 
-  pinMode(PIN_DIR1, OUTPUT);
-  digitalWrite(PIN_DIR1, HIGH);
+  // pinMode(PIN_DIR1, OUTPUT);
+  // digitalWrite(PIN_DIR1, HIGH);
+  steppery.setPinsInverted(true, false, false);
 
   pinMode(PIN_ENABLE, OUTPUT);
   digitalWrite(PIN_ENABLE, HIGH); // disabled by default
@@ -128,22 +128,24 @@ void enableMotors()
   digitalWrite(PIN_ENABLE, LOW);
 }
 
+bool readHall(int hallPin)
+{
+  return analogRead(hallPin) < 100 ? true : false;
+}
+
+bool readHall()
+{
+  hx = readHall(PIN_HALLX);
+  hy = readHall(PIN_HALLY);
+}
+
 void fullstop()
 {
   stepperx.setSpeed(0);
   steppery.setSpeed(0);
   mode = MODE_IDLE;
-}
-
-void centering()
-{
-  hx = digitalRead(PIN_HALLX);
-  hy = digitalRead(PIN_HALLY);
-
-  if (hx == LOW || hy == LOW)
-  {
-    fullstop();
-  }
+  scanningPhase = 0;
+  homingPhase = 0;
 }
 
 bool accelerate()
@@ -328,17 +330,16 @@ bool homing()
     }
     break;
   case 2:
-    hx = digitalRead(PIN_HALLX);
-    hy = digitalRead(PIN_HALLY);
-    if (hx == LOW)
+    readHall();
+    if (hx)
     {
       stepperx.setSpeed(0);
     }
-    if (hy == LOW)
+    if (hy)
     {
       steppery.setSpeed(0);
     }
-    if (hx == LOW && hy == LOW)
+    if (hx && hy)
     {
       steppery.move(10 - (YSTEPS / 4)); // YSTEPS/4 would be 90 deg, 10 is the offset for the hall sensor
       homingPhase = 3;
@@ -384,6 +385,7 @@ void serialData(void)
   switch (instruction)
   {
   case INSTRUCTION_DEBUG:
+    readHall();
     Serial.print("dmode: ");
     Serial.print(mode);
     Serial.print(", scanningPhase: ");
@@ -397,7 +399,12 @@ void serialData(void)
     Serial.print(", distanceToGoX: ");
     Serial.print(stepperx.distanceToGo());
     Serial.print(", distanceToGoY: ");
-    Serial.println(steppery.distanceToGo());
+    Serial.print(steppery.distanceToGo());
+    Serial.print(", hallX: ");
+    Serial.print(hx);
+    Serial.print(", hallY: ");
+    Serial.println(hy);
+
     break;
   case INSTRUCTION_HOME:
     mode = MODE_HOMING;
@@ -441,21 +448,10 @@ void serialData(void)
   case INSTRUCTION_STOP:
     fullstop();
     break;
-  case INSTRUCTION_HALL:
-    hx = digitalRead(PIN_HALLX);
-    hy = digitalRead(PIN_HALLY);
-    Serial.print("dhx:");
-    Serial.print(hx);
-    Serial.print(", hy:");
-    Serial.println(hy);
-    break;
   case INSTRUCTION_LIDAR:
     dist = measure();
     Serial.print("d");
     Serial.println(dist);
-    break;
-  case INSTRUCTION_CENTER:
-    mode = MODE_CENTERING;
     break;
   case INSTRUCTION_DISABLE:
     disableMotors();
@@ -494,11 +490,6 @@ void loop()
       break;
     case MODE_SCANNING:
       scanning();
-      break;
-    case MODE_CENTERING:
-      centering();
-      stepperx.runSpeed();
-      steppery.runSpeed();
       break;
     case MODE_SPEED:
       stepperx.runSpeed();

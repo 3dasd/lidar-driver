@@ -85,7 +85,16 @@ EOF
 Enable and start with:
 `systemctl enable pio-remote && systemctl start pio-remote`
 
+5. Symlink `platformio` under `/bin/platformio`
 
+Not sure if this was necessary because of the messed up install, but I had to:
+
+```sh
+sudo ln -s /home/pi/.platformio/penv/bin/platformio /bin/platformio
+```
+
+(otherwise I got `FileNotFoundError: [Errno 2] No such file or directory: b'/bin/platformio'`
+when doing the remote upload.)
 
 
 
