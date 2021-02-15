@@ -133,7 +133,7 @@ bool readHall(int hallPin)
   return analogRead(hallPin) < 100 ? true : false;
 }
 
-bool readHall()
+void readHall()
 {
   hx = readHall(PIN_HALLX);
   hy = readHall(PIN_HALLY);
@@ -141,8 +141,10 @@ bool readHall()
 
 void fullstop()
 {
-  stepperx.setSpeed(0);
-  steppery.setSpeed(0);
+  stepperx.stop();
+  steppery.stop();
+  // stepperx.setSpeed(0);
+  // steppery.setSpeed(0);
   mode = MODE_IDLE;
   scanningPhase = 0;
   homingPhase = 0;
@@ -150,26 +152,29 @@ void fullstop()
 
 bool accelerate()
 {
-  if (stepperx.currentPosition() == XSTEPS)
-  {
-    Serial.println("dacceleration ready");
-    return true;
-  }
-  // TODO: more gradular change (integrate into accelstepper?)
-  if (stepperx.currentPosition() < XSTEPS * 0.25)
-  {
-    stepperx.setSpeed(50);
-  }
-  else if (stepperx.currentPosition() < XSTEPS * 0.5)
-  {
-    stepperx.setSpeed(150);
-  }
-  else if (stepperx.currentPosition() < XSTEPS * 00.75)
-  {
-    stepperx.setSpeed(300);
-  }
-  stepperx.runSpeed();
-  return false;
+  stepperx.setSpeed(300);
+  return true;
+
+  // if (stepperx.currentPosition() == XSTEPS)
+  // {
+  //   Serial.println("dacceleration ready");
+  //   return true;
+  // }
+  // // TODO: more gradular change (integrate into accelstepper?)
+  // if (stepperx.currentPosition() < XSTEPS * 0.25)
+  // {
+  //   stepperx.setSpeed(50);
+  // }
+  // else if (stepperx.currentPosition() < XSTEPS * 0.5)
+  // {
+  //   stepperx.setSpeed(150);
+  // }
+  // else if (stepperx.currentPosition() < XSTEPS * 00.75)
+  // {
+  //   stepperx.setSpeed(300);
+  // }
+  // stepperx.runSpeed();
+  // return false;
 }
 
 // TODO
@@ -259,10 +264,12 @@ bool scan()
 
   if (stepped && stepperx.currentPosition() % XSTEPS == 0)
   {
-    Serial.println("dfull circle");
+    Serial.print("drow complete (");
+    Serial.print(steppery.currentPosition());
+    Serial.println(")");
     if (steppery.currentPosition() == scanUntilRow)
     {
-      Serial.println("dfull scan");
+      Serial.println("dscan complete");
       return true;
     }
     steppery.move(1);
