@@ -13,6 +13,8 @@ Import("env")
 print("[DEBUG] extra_script.py is running")
 
 def reset_pin_before_upload(source, target, env):
+    print("[DEBUG] killing lidar-client")
+    subprocess.call(["pkill", "lidar-client"])
     print("[DEBUG] driving RST pin")
     subprocess.call(["gpio", "-g", "mode", "18", "out"])
     subprocess.call(["gpio", "-g", "write", "18", "0"])
