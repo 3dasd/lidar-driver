@@ -205,7 +205,7 @@ void printPoint()
   Serial.print("p");
   Serial.print(millis());
   Serial.print(",");
-  Serial.print(stepperx.currentPosition());
+  Serial.print(stepperx.currentPosition() % XSTEPS);
   Serial.print(",");
   Serial.print(steppery.currentPosition());
   Serial.print(",");
@@ -267,7 +267,7 @@ bool scan()
     Serial.print("drow complete (");
     Serial.print(steppery.currentPosition());
     Serial.println(")");
-    if (steppery.currentPosition() == scanUntilRow)
+    if (steppery.currentPosition() == scanUntilRow - 1)
     {
       Serial.println("dscan complete");
       return true;
@@ -287,6 +287,14 @@ void scanning()
   switch (scanningPhase)
   {
   case 0:
+    Serial.println("p# version 1");
+    Serial.print("p# x-resolution ");
+    Serial.println(XSTEPS);
+    Serial.print("p# y-resolution ");
+    Serial.println(YSTEPS);
+    Serial.print("p# num-rows ");
+    Serial.println(scanUntilRow - steppery.currentPosition());
+
     homingPhase = 0;
     scanningPhase = 1;
     break;
@@ -419,9 +427,9 @@ void serialData(void)
     break;
   case INSTRUCTION_RUN:
     scanUntilRow = serialCommandValueInt;
-    if (scanUntilRow < steppery.currentPosition())
+    if (scanUntilRow <= steppery.currentPosition())
     {
-      Serial.println("etarget row is below current position");
+      Serial.println("etarget row is below (or at) current position");
       break;
     }
     if (scanUntilRow > YSTEPS / 4)
