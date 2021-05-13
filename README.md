@@ -83,7 +83,7 @@ EOF
 ```
 
 Enable and start with:
-`systemctl enable pio-remote && systemctl start pio-remote`
+`sudo systemctl enable pio-remote && sudo systemctl start pio-remote`
 
 5. Symlink `platformio` under `/bin/platformio`
 
@@ -97,11 +97,26 @@ sudo ln -s /home/pi/.platformio/penv/bin/platformio /bin/platformio
 when doing the remote upload.)
 
 
+6. (optional) disable updates
+
+```
+pio settings get
+pio settings set check_libraries_interval 99999
+pio settings set check_platforms_interval 99999
+pio settings set check_platformio_interval 99999
+```
+
 
 # Pio upload from RPi
 
-```
+```sh
 pio run --target upload --upload-port /dev/ttyS0
+```
+
+# Pio update from desktop
+
+```sh
+pio remote run --target upload -v
 ```
 
 # Changes required for platformio.ini:
@@ -111,21 +126,4 @@ Add to `platformio.ini`:
 extra_scripts = post:shared/extra_script.py
 ```
 
-`shared/extra_script.py`:
-```python
-import subprocess
-import time
-
-Import("env")
-
-print("[DEBUG] extra_script.py is running")
-
-def reset_pin_before_upload(source, target, env):
-    print("[DEBUG] driving RST pin")
-    subprocess.call(["gpio", "-g", "mode", "18", "out"])
-    subprocess.call(["gpio", "-g", "write", "18", "0"])
-    time.sleep(1)
-    subprocess.call(["gpio", "-g", "write", "18", "1"])
-
-env.AddPreAction("upload", reset_pin_before_upload)
-```
+Add `shared/extra_script.py`.
