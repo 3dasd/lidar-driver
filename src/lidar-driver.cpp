@@ -5,25 +5,25 @@
 
 #define BAUD_RATE 115200
 
-#define PIN_MC_TRIG 11
-#define PIN_MC_MON 10
+#define PIN_MC_TRIG 3
+#define PIN_MC_MON 2
 
-#define PIN_HALLY A6
-#define PIN_HALLX A7
+#define PIN_HALLY A1
+#define PIN_HALLX A2
 
-#define PIN_STEP1 9
-#define PIN_DIR1 8
-#define PIN_STEP2 3
-#define PIN_DIR2 2
+#define PIN_STEP1 5
+#define PIN_DIR1 4
+#define PIN_STEP2 11
+#define PIN_DIR2 10
 
-#define PIN_MS1 6
-#define PIN_MS2 5
-#define PIN_MS3 4
+#define PIN_MS1 8
+#define PIN_MS2 7
+#define PIN_MS3 6
 
-#define PIN_ENABLE 7
+#define PIN_ENABLE 9
 
-#define PIN_LED_GREEN A1
-#define PIN_LED_ORANGE A2
+#define PIN_LED_GREEN A7
+#define PIN_LED_ORANGE A6
 #define PIN_LED_RED A3
 
 #define MAX_STRING_LENGTH 10
@@ -79,10 +79,8 @@ void setup()
   // pinMode(PIN_MC_MON, INPUT);
 
   // LEDs init
-  pinMode(PIN_LED_GREEN, OUTPUT);
-  digitalWrite(PIN_LED_GREEN, HIGH);
-  // pinMode(PIN_LED_ORANGE, OUTPUT);
-  // digitalWrite(PIN_LED_ORANGE, HIGH);
+  pinMode(PIN_LED_RED, OUTPUT);
+  analogWrite(PIN_LED_RED, 150);
 
   pinMode(PIN_HALLX, INPUT);
   pinMode(PIN_HALLY, INPUT);
@@ -98,7 +96,7 @@ void setup()
 
   // pinMode(PIN_DIR1, OUTPUT);
   // digitalWrite(PIN_DIR1, HIGH);
-  steppery.setPinsInverted(true, false, false);
+  stepperx.setPinsInverted(true, false, false);
 
   pinMode(PIN_ENABLE, OUTPUT);
   digitalWrite(PIN_ENABLE, HIGH); // disabled by default
