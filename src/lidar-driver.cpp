@@ -2,19 +2,20 @@
 #include <AccelStepper.h> // TODO: remove dependency as it's GPL licensed
 #include <MultiStepper.h> // TODO: remove dependency as it's GPL licensed
 #include <LIDARLite.h>
+#include <singleLEDLibrary.h>
 
 #define BAUD_RATE 115200
 
 #define PIN_MC_TRIG 3
 #define PIN_MC_MON 2
 
-#define PIN_HALLY A1
-#define PIN_HALLX A2
+#define PIN_HALLY A6
+#define PIN_HALLX A7
 
-#define PIN_STEP1 5
-#define PIN_DIR1 4
-#define PIN_STEP2 11
-#define PIN_DIR2 10
+#define PIN_STEPX 5
+#define PIN_DIRX 4
+#define PIN_STEPY 11
+#define PIN_DIRY 10
 
 #define PIN_MS1 8
 #define PIN_MS2 7
@@ -22,9 +23,9 @@
 
 #define PIN_ENABLE 9
 
-#define PIN_LED_GREEN A7
-#define PIN_LED_ORANGE A6
-#define PIN_LED_RED A3
+#define PIN_LED_GREEN A3
+#define PIN_LED_ORANGE A2
+#define PIN_LED_RED A1
 
 #define MAX_STRING_LENGTH 10
 
@@ -54,8 +55,15 @@
 
 int inByte = 0;
 
-AccelStepper stepperx = AccelStepper(AccelStepper::DRIVER, PIN_STEP1, PIN_DIR1);
-AccelStepper steppery = AccelStepper(AccelStepper::DRIVER, PIN_STEP2, PIN_DIR2);
+int blink500[] = {100, 400};
+int blink1000[] = {100, 900};
+int blink2000[] = {100, 1900};
+sllib ledGreen(PIN_LED_GREEN);
+sllib ledOrange(PIN_LED_ORANGE);
+sllib ledRed(PIN_LED_RED);
+
+AccelStepper stepperx = AccelStepper(AccelStepper::DRIVER, PIN_STEPX, PIN_DIRX);
+AccelStepper steppery = AccelStepper(AccelStepper::DRIVER, PIN_STEPY, PIN_DIRY);
 
 LIDARLite myLidarLite;
 
@@ -79,8 +87,7 @@ void setup()
   // pinMode(PIN_MC_MON, INPUT);
 
   // LEDs init
-  pinMode(PIN_LED_RED, OUTPUT);
-  analogWrite(PIN_LED_RED, 150);
+  ledGreen.setPatternSingle(blink2000, 2);
 
   pinMode(PIN_HALLX, INPUT);
   pinMode(PIN_HALLY, INPUT);
@@ -92,10 +99,10 @@ void setup()
   pinMode(PIN_MS3, OUTPUT);
   digitalWrite(PIN_MS3, LOW);
 
-  pinMode(PIN_STEP1, OUTPUT);
+  pinMode(PIN_STEPX, OUTPUT);
 
-  // pinMode(PIN_DIR1, OUTPUT);
-  // digitalWrite(PIN_DIR1, HIGH);
+  // pinMode(PIN_DIRX, OUTPUT);
+  // digitalWrite(PIN_DIRX, HIGH);
   stepperx.setPinsInverted(true, false, false);
 
   pinMode(PIN_ENABLE, OUTPUT);
@@ -488,6 +495,10 @@ void loop()
 {
   while (1)
   {
+    ledGreen.update();
+    ledOrange.update();
+    ledRed.update();
+
     if (Serial.available())
     {
       serialData();

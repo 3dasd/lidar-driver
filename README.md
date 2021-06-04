@@ -1,5 +1,10 @@
+# lidar-driver
 
-# Hacked `avrdude`:
+This is the software running on an Arduino on the 3dasd scanner.
+
+> Rest of this readme are just some notes to myself. For instructions see https://3dasd.com
+
+## Hacked `avrdude`:
 ```sh
 # compile
 arduino-cli compile -v -b arduino:avr:nano ~/MyArduinoSketch
@@ -9,7 +14,7 @@ cd ~/.arduino15/packages/arduino/tools/avrdude/6.3.0-arduino17/bin
 arduino-cli upload --port /dev/ttyS0 -b arduino:avr:nano -v ~/MyArduinoSketch/
 ```
 
-# Platformio:
+## Platformio:
 
 0. Install Rust
 
@@ -107,19 +112,19 @@ pio settings set check_platformio_interval 99999
 ```
 
 
-# Pio upload from RPi
+## Pio upload from RPi
 
 ```sh
 pio run --target upload --upload-port /dev/ttyS0
 ```
 
-# Pio update from desktop
+## Pio update from desktop
 
 ```sh
 pio remote run --target upload -v
 ```
 
-# Changes required for platformio.ini:
+## Changes required for platformio.ini:
 
 Add to `platformio.ini`:
 ```
